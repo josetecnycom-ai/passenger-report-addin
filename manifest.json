@@ -1,0 +1,17 @@
+{
+  "name": "Passenger Occupancy Report",
+  "description": "Informe detallado de ocupación de vehículos basado en sensores de puertas traseras y acompañante.",
+  "version": "1.0.0",
+  "supportEmail": "soporte@tuempresa.com",
+  "items": [
+    {
+      "url": "https://josetecnycom-ai.github.io/passenger-report-addin/addin.html",
+      "path": "Activity/",
+      "menuName": {
+        "en": "Passenger Report",
+        "es": "Informe de Pasajeros"
+      },
+      "icon": "https://josetecnycom-ai.github.io/passenger-report-addin/icon.svg"
+    }
+  ]
+}
