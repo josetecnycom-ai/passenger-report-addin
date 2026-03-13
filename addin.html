@@ -4,7 +4,6 @@
     <div id="passenger-report-addin" style="width: 100%; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f6f9; padding: 20px; box-sizing: border-box;">
         
         <style>
-            /* CSS protegido dentro del Add-in */
             #passenger-report-addin .toolbar { 
                 background: white; padding: 20px; border-radius: 10px; 
                 border: 1px solid #dcdde1; display: flex; gap: 20px; 
@@ -19,7 +18,6 @@
             #passenger-report-addin #btn-refresh:hover { background: #074b83; }
             #passenger-report-addin #btn-download { background: #27ae60; }
 
-            /* Dashboard Superior */
             #passenger-report-addin .dash-row { display: flex; gap: 20px; margin-bottom: 25px; width: 100%; }
             #passenger-report-addin .dash-box { 
                 flex: 1; background: white; padding: 20px; border-radius: 10px; 
@@ -29,15 +27,10 @@
             #passenger-report-addin .dash-box .val { font-size: 28px; font-weight: 900; color: #2f3640; display: block; margin-bottom: 5px;}
             #passenger-report-addin .dash-box .sub { font-size: 13px; color: #95a5a6; font-weight: 600;}
 
-            /* GRID RESPONSIVO PARA TARJETAS */
             #passenger-report-addin .cards-grid { 
-                display: grid; 
-                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); 
-                gap: 20px; 
-                width: 100%; 
+                display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; width: 100%; 
             }
 
-            /* Diseño de cada tarjeta */
             #passenger-report-addin .v-card { 
                 background: white; border-radius: 10px; border: 1px solid #dcdde1; 
                 box-shadow: 0 4px 10px rgba(0,0,0,0.06); display: flex; flex-direction: column; overflow: hidden;
@@ -57,7 +50,6 @@
 
             #passenger-report-addin .text-green { color: #27ae60 !important; }
             #passenger-report-addin .text-orange { color: #e67e22 !important; }
-
             #passenger-report-addin .loading-msg { grid-column: 1 / -1; text-align: center; padding: 50px; color: #7f8c8d; font-size: 16px; font-weight: bold;}
         </style>
 
@@ -81,7 +73,6 @@
         <div id="cards-container" class="cards-grid">
             <div class="loading-msg">Indica el rango de fechas y pulsa "Generar Informe" para analizar la flota.</div>
         </div>
-
     </div>
 
     <script>
@@ -116,7 +107,6 @@
                         if (dT.length === 0) return null;
 
                         const dE = excs.filter(ex => ex.device.id === d.id);
-                        let occ = false;
                         let lastStop = null;
 
                         let s = { 
@@ -135,31 +125,40 @@
                             if (lastStop) s.stopMs += (start - lastStop);
                             lastStop = stop;
 
-                            // Comprobamos apertura de puertas (Toggle de ocupación)
-                            const event = dE.some(e => 
-                                new Date(e.activeFrom) >= new Date(start.getTime() - 300000) && 
-                                new Date(e.activeFrom) <= start
-                            );
-                            if (event) occ = !occ;
+                            // NUEVA LÓGICA DE DETECCIÓN POR SOLAPAMIENTO:
+                            // Comprobamos si la regla estuvo activa en CUALQUIER momento durante este viaje.
+                            let isOccupied = dE.some(e => {
+                                const eStart = new Date(e.activeFrom).getTime();
+                                // Si la regla sigue activa (activeTo es null), usamos la fecha actual
+                                const eEnd = e.activeTo ? new Date(e.activeTo).getTime() : new Date().getTime();
+                                
+                                // Solapa si la regla empezó antes de que el viaje terminara, 
+                                // y la regla terminó después de que el viaje empezara.
+                                return eStart <= stop.getTime() && eEnd >= start.getTime();
+                            });
 
-                            // LOGICA CORREGIDA: Si la distancia es menor a 100 metros (0.1 km), es un falso viaje (Ralentí/Espera).
-                            // No suma viajes ni km ni tiempo a "Ocupado/Vacío", solo suma a Tiempo de Espera.
+                            // Filtro de Ralentí/Espera (< 0.1 km = Falso Viaje)
                             if (km < 0.1) {
                                 s.idleMs += dur;
                             } else {
-                                // Es un viaje real, lo sumamos donde corresponda
-                                if (occ) { s.oCount++; s.oKm += km; s.oMs += dur; }
-                                else { s.vCount++; s.vKm += km; s.vMs += dur; }
+                                // Si en algún momento del viaje hubo evento, suma TODO el viaje a Ocupado
+                                if (isOccupied) { 
+                                    s.oCount++; 
+                                    s.oKm += km; 
+                                    s.oMs += dur; 
+                                } else { 
+                                    s.vCount++; 
+                                    s.vKm += km; 
+                                    s.vMs += dur; 
+                                }
                             }
                         });
                         
-                        // Solo devolvemos el vehículo si tuvo al menos algún movimiento o espera
                         if (s.oCount > 0 || s.vCount > 0 || s.idleMs > 0) return s;
                         return null;
 
                     })
                     .filter(x => x !== null)
-                    // NUEVO ORDEN: Mayor número de viajes ocupados primero. Si empatan, orden alfabético.
                     .sort((a,b) => b.oCount - a.oCount || a.name.localeCompare(b.name));
                     
                 } catch (e) { alert("Error obteniendo datos: " + e.message); return []; }
