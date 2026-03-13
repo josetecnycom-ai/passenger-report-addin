@@ -1,87 +1,68 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="utf-8">
-    <style>
-        :root {
-            --primary: #0984e3;
-            --success: #27ae60;
-            --warning: #f39c12;
-            --bg: #f1f2f6;
-            --text: #2f3542;
-            --border: #ced4da;
-        }
-
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background-color: var(--bg); 
-            margin: 0; padding: 15px; width: 100%; box-sizing: border-box;
-        }
-
-        /* Contenedor Principal al 100% */
-        #passenger-report-addin { width: 100%; margin: 0; }
-
-        /* Controles Superiores */
-        .toolbar { 
-            background: white; padding: 15px 25px; border-radius: 8px; 
-            border: 1px solid var(--border); display: flex; gap: 20px; 
-            align-items: flex-end; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        .date-group { display: flex; flex-direction: column; gap: 4px; }
-        .date-group label { font-size: 11px; font-weight: bold; color: #57606f; text-transform: uppercase; }
-        .date-group input { padding: 8px; border: 1px solid var(--border); border-radius: 4px; }
-
-        button { padding: 10px 18px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        #btn-refresh { background: var(--primary); color: white; }
-        #btn-download { background: var(--success); color: white; }
-        button:hover { opacity: 0.85; }
-
-        /* Dashboard Global Mejorado */
-        .dash-row { display: flex; gap: 15px; margin-bottom: 20px; width: 100%; }
-        .dash-box { 
-            flex: 1; background: white; padding: 15px; border-radius: 8px; 
-            border: 1px solid var(--border); border-top: 4px solid var(--primary);
-        }
-        .dash-box h4 { margin: 0; font-size: 12px; color: #747d8c; text-transform: uppercase; }
-        .dash-box .val { font-size: 24px; font-weight: 900; display: block; margin: 5px 0; color: var(--text); }
-        .dash-box .sub { font-size: 12px; color: #a4b0be; }
-
-        /* GRID DE TARJETAS OCUPANDO TODO EL ANCHO */
-        .cards-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); 
-            gap: 20px; width: 100%; 
-        }
-
-        .v-card { 
-            background: white; border-radius: 8px; border: 1px solid var(--border); 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02); display: flex; flex-direction: column;
-            overflow: hidden;
-        }
-
-        .v-header { background: #f8f9fa; padding: 12px 15px; border-bottom: 1px solid var(--border); }
-        .v-header h3 { margin: 0; font-size: 15px; color: var(--primary); }
-
-        .v-body { padding: 15px; }
-        
-        /* Secciones de Datos */
-        .data-sect { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px dashed #eee; }
-        .data-sect:last-child { border-bottom: none; margin-bottom: 0; }
-        .sect-title { font-size: 10px; font-weight: 800; color: #a4b0be; text-transform: uppercase; margin-bottom: 8px; display: block; }
-
-        .row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px; }
-        .lab { color: #747d8c; }
-        .num { font-weight: 700; color: var(--text); }
-
-        .highlight-green { color: var(--success) !important; }
-        .highlight-orange { color: var(--warning) !important; }
-
-        .loading { grid-column: 1 / -1; text-align: center; padding: 40px; color: #a4b0be; }
-    </style>
-</head>
 <body>
-    <div id="passenger-report-addin">
+    <div id="passenger-report-addin" style="width: 100%; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f6f9; padding: 20px; box-sizing: border-box;">
+        
+        <style>
+            /* CSS protegido dentro del Add-in */
+            #passenger-report-addin .toolbar { 
+                background: white; padding: 20px; border-radius: 10px; 
+                border: 1px solid #dcdde1; display: flex; gap: 20px; 
+                align-items: flex-end; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            }
+            #passenger-report-addin .date-group { display: flex; flex-direction: column; gap: 5px; }
+            #passenger-report-addin .date-group label { font-size: 12px; font-weight: bold; color: #7f8c8d; text-transform: uppercase; }
+            #passenger-report-addin .date-group input { padding: 10px; border: 1px solid #dcdde1; border-radius: 6px; font-family: inherit; }
+            
+            #passenger-report-addin button { padding: 12px 24px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; }
+            #passenger-report-addin #btn-refresh { background: #0984e3; }
+            #passenger-report-addin #btn-refresh:hover { background: #074b83; }
+            #passenger-report-addin #btn-download { background: #27ae60; }
+
+            /* Dashboard Superior */
+            #passenger-report-addin .dash-row { display: flex; gap: 20px; margin-bottom: 25px; width: 100%; }
+            #passenger-report-addin .dash-box { 
+                flex: 1; background: white; padding: 20px; border-radius: 10px; 
+                border: 1px solid #dcdde1; border-left: 6px solid #0984e3; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            }
+            #passenger-report-addin .dash-box h4 { margin: 0 0 10px 0; font-size: 14px; color: #7f8c8d; text-transform: uppercase; }
+            #passenger-report-addin .dash-box .val { font-size: 28px; font-weight: 900; color: #2f3640; display: block; margin-bottom: 5px;}
+            #passenger-report-addin .dash-box .sub { font-size: 13px; color: #95a5a6; font-weight: 600;}
+
+            /* GRID RESPONSIVO PARA TARJETAS */
+            #passenger-report-addin .cards-grid { 
+                display: grid; 
+                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); 
+                gap: 20px; 
+                width: 100%; 
+            }
+
+            /* Diseño de cada tarjeta */
+            #passenger-report-addin .v-card { 
+                background: white; border-radius: 10px; border: 1px solid #dcdde1; 
+                box-shadow: 0 4px 10px rgba(0,0,0,0.06); display: flex; flex-direction: column; overflow: hidden;
+            }
+            #passenger-report-addin .v-header { background: #f8f9fa; padding: 15px 20px; border-bottom: 1px solid #dcdde1; display: flex; justify-content: space-between; align-items: center;}
+            #passenger-report-addin .v-header h3 { margin: 0; font-size: 16px; color: #2c3e50; font-weight: 800;}
+            #passenger-report-addin .badge-occ { background: #27ae60; color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+
+            #passenger-report-addin .v-body { padding: 20px; }
+            #passenger-report-addin .data-sect { margin-bottom: 18px; padding-bottom: 15px; border-bottom: 1px dashed #ecf0f1; }
+            #passenger-report-addin .data-sect:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+            
+            #passenger-report-addin .sect-title { font-size: 11px; font-weight: 800; color: #95a5a6; text-transform: uppercase; margin-bottom: 10px; display: block; }
+            #passenger-report-addin .row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px; }
+            #passenger-report-addin .lab { color: #34495e; font-weight: 600; }
+            #passenger-report-addin .num { font-weight: 800; color: #2c3e50; }
+
+            #passenger-report-addin .text-green { color: #27ae60 !important; }
+            #passenger-report-addin .text-orange { color: #e67e22 !important; }
+
+            #passenger-report-addin .loading-msg { grid-column: 1 / -1; text-align: center; padding: 50px; color: #7f8c8d; font-size: 16px; font-weight: bold;}
+        </style>
+
+        <h2 style="color: #2c3e50; margin-top: 0; margin-bottom: 20px;">📊 Monitor de Ocupación de Flota</h2>
+
         <div class="toolbar">
             <div class="date-group">
                 <label>Fecha Desde</label>
@@ -91,15 +72,16 @@
                 <label>Fecha Hasta</label>
                 <input type="date" id="d-to">
             </div>
-            <button id="btn-refresh">📊 Generar Informe</button>
-            <button id="btn-download" style="display:none">📥 Excel</button>
+            <button id="btn-refresh">Generar Informe</button>
+            <button id="btn-download" style="display:none">📥 Descargar Excel</button>
         </div>
 
         <div id="global-dash" class="dash-row"></div>
 
         <div id="cards-container" class="cards-grid">
-            <div class="loading">Configura las fechas y pulsa generar para cargar los datos de la flota.</div>
+            <div class="loading-msg">Indica el rango de fechas y pulsa "Generar Informe" para analizar la flota.</div>
         </div>
+
     </div>
 
     <script>
@@ -141,7 +123,7 @@
                             name: d.name, 
                             oKm: 0, vKm: 0, oMs: 0, vMs: 0, 
                             stopMs: 0, oCount: 0, vCount: 0, 
-                            idleMs: 0 // Tiempo con motor ON pero sin moverse
+                            idleMs: 0 
                         };
 
                         dT.forEach(tr => {
@@ -153,71 +135,92 @@
                             if (lastStop) s.stopMs += (start - lastStop);
                             lastStop = stop;
 
-                            // Lógica Smart: Si el viaje duró mucho pero recorrió menos de 50 metros, es ralentí/espera
-                            if (km < 0.05) {
-                                s.idleMs += dur;
-                            }
-
+                            // Comprobamos apertura de puertas (Toggle de ocupación)
                             const event = dE.some(e => 
                                 new Date(e.activeFrom) >= new Date(start.getTime() - 300000) && 
                                 new Date(e.activeFrom) <= start
                             );
                             if (event) occ = !occ;
 
-                            if (occ) { s.oCount++; s.oKm += km; s.oMs += dur; }
-                            else { s.vCount++; s.vKm += km; s.vMs += dur; }
+                            // LOGICA CORREGIDA: Si la distancia es menor a 100 metros (0.1 km), es un falso viaje (Ralentí/Espera).
+                            // No suma viajes ni km ni tiempo a "Ocupado/Vacío", solo suma a Tiempo de Espera.
+                            if (km < 0.1) {
+                                s.idleMs += dur;
+                            } else {
+                                // Es un viaje real, lo sumamos donde corresponda
+                                if (occ) { s.oCount++; s.oKm += km; s.oMs += dur; }
+                                else { s.vCount++; s.vKm += km; s.vMs += dur; }
+                            }
                         });
-                        return s;
-                    }).filter(x => x !== null).sort((a,b) => a.name.localeCompare(b.name));
-                } catch (e) { console.error(e); return []; }
+                        
+                        // Solo devolvemos el vehículo si tuvo al menos algún movimiento o espera
+                        if (s.oCount > 0 || s.vCount > 0 || s.idleMs > 0) return s;
+                        return null;
+
+                    })
+                    .filter(x => x !== null)
+                    // NUEVO ORDEN: Mayor número de viajes ocupados primero. Si empatan, orden alfabético.
+                    .sort((a,b) => b.oCount - a.oCount || a.name.localeCompare(b.name));
+                    
+                } catch (e) { alert("Error obteniendo datos: " + e.message); return []; }
             };
 
             const render = (data) => {
                 const grid = document.getElementById("cards-container");
                 const dash = document.getElementById("global-dash");
-                let g = { oK: 0, vK: 0, oM: 0, vM: 0 };
+                let g = { oK: 0, vK: 0, oM: 0, vM: 0, oV: 0, vV: 0 };
+
+                if(data.length === 0) {
+                    grid.innerHTML = '<div class="loading-msg">No se encontraron datos para estas fechas.</div>';
+                    dash.innerHTML = "";
+                    document.getElementById("btn-download").style.display = "none";
+                    return;
+                }
 
                 grid.innerHTML = data.map(v => {
-                    g.oK += v.oKm; g.vK += v.vKm; g.oM += v.oMs; g.vM += v.vMs;
+                    g.oK += v.oKm; g.vK += v.vKm; g.oM += v.oMs; g.vM += v.vMs; g.oV += v.oCount; g.vV += v.vCount;
                     
                     return `
                     <div class="v-card">
-                        <div class="v-header"><h3>🚚 ${v.name}</h3></div>
+                        <div class="v-header">
+                            <h3>🚚 ${v.name}</h3>
+                            ${v.oCount > 0 ? `<span class="badge-occ">${v.oCount} Viajes Occ.</span>` : ''}
+                        </div>
                         <div class="v-body">
                             <div class="data-sect">
-                                <span class="sect-title">Estado: Ocupado (Pasajeros)</span>
-                                <div class="row"><span class="lab">Viajes:</span><span class="num">${v.oCount}</span></div>
-                                <div class="row"><span class="lab">Distancia:</span><span class="num highlight-green">${v.oKm.toFixed(2)} km</span></div>
-                                <div class="row"><span class="lab">Tiempo motor:</span><span class="num">${fmtT(v.oMs)}</span></div>
+                                <span class="sect-title">👥 Ocupado (Con Pasajero)</span>
+                                <div class="row"><span class="lab">Viajes Reales:</span><span class="num">${v.oCount}</span></div>
+                                <div class="row"><span class="lab">Distancia:</span><span class="num text-green">${v.oKm.toFixed(1)} km</span></div>
+                                <div class="row"><span class="lab">Tiempo conducción:</span><span class="num">${fmtT(v.oMs)}</span></div>
                             </div>
                             <div class="data-sect">
-                                <span class="sect-title">Estado: Vacío (Solo Conductor)</span>
-                                <div class="row"><span class="lab">Viajes:</span><span class="num">${v.vCount}</span></div>
-                                <div class="row"><span class="lab">Distancia:</span><span class="num">${v.vKm.toFixed(2)} km</span></div>
-                                <div class="row"><span class="lab">Tiempo motor:</span><span class="num">${fmtT(v.vMs)}</span></div>
+                                <span class="sect-title">⚪ Vacío (Solo Conductor)</span>
+                                <div class="row"><span class="lab">Viajes Reales:</span><span class="num">${v.vCount}</span></div>
+                                <div class="row"><span class="lab">Distancia:</span><span class="num">${v.vKm.toFixed(1)} km</span></div>
+                                <div class="row"><span class="lab">Tiempo conducción:</span><span class="num">${fmtT(v.vMs)}</span></div>
                             </div>
                             <div class="data-sect">
-                                <span class="sect-title">Análisis de Tiempos</span>
-                                <div class="row"><span class="lab">Tiempo en Espera (Ignition ON):</span><span class="num highlight-orange">${fmtT(v.idleMs)}</span></div>
-                                <div class="row"><span class="lab">Tiempo Real Parado (OFF):</span><span class="num">${fmtT(v.stopMs)}</span></div>
+                                <span class="sect-title">⏱️ Tiempos de Inactividad</span>
+                                <div class="row"><span class="lab">Espera (Motor Arrancado):</span><span class="num text-orange">${fmtT(v.idleMs)}</span></div>
+                                <div class="row"><span class="lab">Motor Apagado:</span><span class="num">${fmtT(v.stopMs)}</span></div>
                             </div>
                         </div>
                     </div>`;
                 }).join('');
 
                 dash.innerHTML = `
-                    <div class="dash-box">
+                    <div class="dash-box" style="border-left-color: #27ae60;">
                         <h4>Total Flota Ocupada</h4>
-                        <span class="val highlight-green">${g.oK.toFixed(1)} km</span>
-                        <span class="sub">En ${fmtT(g.oM)} de actividad</span>
+                        <span class="val text-green">${g.oK.toFixed(1)} km</span>
+                        <span class="sub">${g.oV} viajes | ${fmtT(g.oM)} conduciendo</span>
                     </div>
-                    <div class="dash-box" style="border-top-color: #a4b0be">
+                    <div class="dash-box" style="border-left-color: #7f8c8d;">
                         <h4>Total Flota Vacía</h4>
-                        <span class="val">${g.vK.toFixed(1)} km</span>
-                        <span class="sub">En ${fmtT(g.vM)} de actividad</span>
+                        <span class="val" style="color:#2f3640;">${g.vK.toFixed(1)} km</span>
+                        <span class="sub">${g.vV} viajes | ${fmtT(g.vM)} conduciendo</span>
                     </div>
                 `;
-                document.getElementById("btn-download").style.display = "block";
+                document.getElementById("btn-download").style.display = "inline-block";
             };
 
             return {
@@ -229,18 +232,21 @@
                 },
                 focus: function (api, state) {
                     document.getElementById("btn-refresh").onclick = async () => {
-                        document.getElementById("btn-refresh").innerText = "⌛ Calculando...";
+                        const btn = document.getElementById("btn-refresh");
+                        btn.innerText = "Calculando..."; btn.disabled = true;
+                        
                         lastData = await process(document.getElementById("d-from").value, document.getElementById("d-to").value);
                         render(lastData);
-                        document.getElementById("btn-refresh").innerText = "📊 Generar Informe";
+                        
+                        btn.innerText = "Generar Informe"; btn.disabled = false;
                     };
                     document.getElementById("btn-download").onclick = () => {
-                        let csv = "\uFEFFVehiculo,Km_Ocupado,Km_Vacio,Tiempo_Motor_Ocupado,Tiempo_Motor_Vacio,Tiempo_Espera_ON\n" + 
-                                  lastData.map(v => `${v.name},${v.oKm.toFixed(2)},${v.vKm.toFixed(2)},${v.oMs},${v.vMs},${v.idleMs}`).join("\n");
+                        let csv = "\uFEFFVehiculo,Viajes_Ocupado,Km_Ocupado,Tiempo_Cond_Ocupado,Viajes_Vacio,Km_Vacio,Tiempo_Cond_Vacio,Tiempo_Espera_Motor_ON\n" + 
+                                  lastData.map(v => `${v.name},${v.oCount},${v.oKm.toFixed(2)},${v.oMs},${v.vCount},${v.vKm.toFixed(2)},${v.vMs},${v.idleMs}`).join("\n");
                         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                         const link = document.createElement("a");
                         link.href = URL.createObjectURL(blob);
-                        link.download = "Reporte_Ocupacion_Flota.csv";
+                        link.download = "Reporte_Ocupacion.csv";
                         link.click();
                     };
                 },
