@@ -1,0 +1,31 @@
+<div id="passenger-report-addin" style="padding: 20px; font-family: sans-serif; background: #f5f6fa;">
+    <h2 style="color: #2f3640;">📊 Monitor de Ocupación de Flota</h2>
+    
+    <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; gap: 20px; align-items: flex-end; margin-bottom: 20px;">
+        <div>
+            <label style="display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px;">Fecha de consulta:</label>
+            <input type="date" id="date-selector" style="padding: 8px; border: 1px solid #dcdde1; border-radius: 4px;">
+        </div>
+        <button id="btn-refresh" style="background: #0984e3; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">Generar Informe</button>
+        <button id="btn-download" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; display:none;">📥 Descargar Excel</button>
+    </div>
+
+    <div id="summary-cards" style="display: flex; gap: 20px; margin-bottom: 20px;"></div>
+
+    <div style="background: white; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead style="background: #2f3640; color: white;">
+                <tr>
+                    <th style="padding: 12px;">Vehículo</th>
+                    <th style="padding: 12px;">Estado</th>
+                    <th style="padding: 12px;">Inicio Viaje</th>
+                    <th style="padding: 12px;">Duración</th>
+                    <th style="padding: 12px;">Distancia (km)</th>
+                </tr>
+            </thead>
+            <tbody id="results-table-body">
+                <tr><td colspan="5" style="padding: 20px; text-align: center; color: #7f8c8d;">Selecciona una fecha para comenzar...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
