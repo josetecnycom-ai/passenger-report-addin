@@ -50,22 +50,35 @@
             };
 
             const process = async (f, t) => {
-                elResults.innerHTML = '<p>Calculando datos con precisión...</p>';
+                elResults.innerHTML = '<p>Buscando regla de ocupación y calculando viajes...</p>';
                 
-                // Configuración de fechas UTC para Geotab
                 const fromDate = new Date(f + "T00:00:00Z").toISOString();
                 const toDate = new Date(t + "T23:59:59Z").toISOString();
 
                 try {
-                    const [devices, allTrips, allMessages] = await Promise.all([
+                    // 1. Encontrar dinámicamente tu regla de Ocupación
+                    const allRules = await api.call("Get", { typeName: "Rule" });
+                    const ocupacionRule = allRules.find(r => 
+                        r.name.toLowerCase().includes("pasajero") || 
+                        r.name.toLowerCase().includes("ocupaci")
+                    );
+
+                    if (!ocupacionRule) {
+                        elResults.innerHTML = `<p style="color:red">Error: No se encontró ninguna regla que contenga la palabra "pasajeros" u "ocupación". Verifica el nombre de tu regla.</p>`;
+                        return;
+                    }
+
+                    // 2. Extraer Dispositivos, Viajes y las Excepciones específicas de esa regla
+                    const [devices, allTrips, allExceptions] = await Promise.all([
                         api.call("Get", { typeName: "Device" }),
                         api.call("Get", { typeName: "Trip", search: { fromDate, toDate } }),
-                        api.call("Get", { typeName: "TextMessage", search: { fromDate, toDate } })
+                        api.call("Get", { typeName: "ExceptionEvent", search: { fromDate, toDate, ruleSearch: { id: ocupacionRule.id } } })
                     ]);
 
-                    const report = devices.map(dev => {
-                        const devTrips = allTrips.filter(tr => tr.device.id === dev.id);
-                        const devMsgs = allMessages.filter(m => m.device.id === dev.id);
+                    let report = devices.map(dev => {
+                        // Ordenar cronológicamente viajes y excepciones
+                        const devTrips = allTrips.filter(tr => tr.device.id === dev.id).sort((a,b) => new Date(a.start) - new Date(b.start));
+                        const devExcs = allExceptions.filter(ex => ex.device.id === dev.id).sort((a,b) => new Date(a.activeFrom) - new Date(b.activeFrom));
                         
                         let stats = {
                             name: dev.name,
@@ -74,24 +87,34 @@
                             waitingTime: 0
                         };
 
+                        let isOccupied = false; // Estado inicial: Vacío
+                        let lastTripEnd = new Date(0); // Para medir el espacio de tiempo entre viajes
+
                         devTrips.forEach(tr => {
                             const dist = tr.distance || 0;
-                            const duration = new Date(tr.stop) - new Date(tr.start);
+                            const tStart = new Date(tr.start);
+                            const tStop = new Date(tr.stop);
+                            const duration = tStop - tStart;
                             
-                            // 1. Filtrar micro-movimientos (menos de 100 metros) como tiempo de espera
+                            // Filtrar micro-movimientos como tiempo de espera (no afecta al interruptor)
                             if (dist < 0.1) {
                                 stats.waitingTime += duration;
-                                return;
+                                return; 
                             }
 
-                            // 2. Lógica de Ocupación (Check de mensajes con margen de 5 min)
-                            const isOccupied = devMsgs.some(m => {
-                                const mTime = new Date(m.sent || m.delivered || m.activeFrom).getTime();
-                                const tStart = new Date(tr.start).getTime();
-                                const tStop = new Date(tr.stop).getTime();
-                                return mTime >= (tStart - 300000) && mTime <= (tStop + 300000);
+                            // LÓGICA DE INTERRUPTOR (TOGGLE)
+                            // ¿Se abrió alguna puerta entre el final del viaje anterior y el inicio de este viaje?
+                            const doorOpenedDuringStop = devExcs.some(ex => {
+                                const exTime = new Date(ex.activeFrom);
+                                return exTime >= lastTripEnd && exTime <= tStart;
                             });
 
+                            // Si la puerta se abrió al menos una vez mientras estaba parado, alternamos el estado
+                            if (doorOpenedDuringStop) {
+                                isOccupied = !isOccupied;
+                            }
+
+                            // Clasificamos el viaje según el estado actual
                             if (isOccupied) {
                                 stats.occKm += dist;
                                 stats.occTime += duration;
@@ -101,9 +124,16 @@
                                 stats.vacTime += duration;
                                 stats.vacTrips++;
                             }
+
+                            // Actualizamos el final del viaje para la siguiente iteración
+                            lastTripEnd = tStop;
                         });
+
                         return stats;
                     }).filter(s => (s.occKm + s.vacKm) > 0 || s.waitingTime > 0);
+
+                    // 3. Ordenar el reporte: de mayor a menor número de viajes ocupados
+                    report.sort((a, b) => b.occTrips - a.occTrips);
 
                     render(report);
                 } catch (err) {
