@@ -89,10 +89,11 @@
                 return h > 0 ? `${h}h ${m}m` : `${m} min`;
             };
 
-          const fromDate = new Date(f).toISOString();
-const toDateObj = new Date(t);
-toDateObj.setHours(23, 59, 59, 999);
-const toDate = toDateObj.toISOString();
+            const process = async (f, t) => {
+                const fromDate = new Date(f).toISOString();
+                const toDateObj = new Date(t);
+                toDateObj.setHours(23, 59, 59, 999);
+                const toDate = toDateObj.toISOString();
 
                 try {
                     const [devs, trips, excs] = await Promise.all([
@@ -119,7 +120,7 @@ const toDate = toDateObj.toISOString();
                             const start = new Date(tr.start);
                             const stop = new Date(tr.stop);
                             const dur = stop - start;
-                            const km = (tr.distance || 0);
+                            const km = (tr.distance || 0) / 1000;
 
                             if (lastStop) s.stopMs += (start - lastStop);
                             lastStop = stop;
