@@ -89,17 +89,10 @@
                 return h > 0 ? `${h}h ${m}m` : `${m} min`;
             };
 
-            // Extraemos año, mes y día de los inputs (ej: "2026-03-14")
-const [fYear, fMonth, fDay] = f.split('-');
-const [tYear, tMonth, tDay] = t.split('-');
-
-// Forzamos la creación del objeto fecha en HORARIO LOCAL
-const fromObj = new Date(fYear, fMonth - 1, fDay, 0, 0, 0, 0);
-const toObj = new Date(tYear, tMonth - 1, tDay, 23, 59, 59, 999);
-
-// Convertimos a UTC (que es lo que pide la API de Geotab) de forma precisa
-const fromDate = fromObj.toISOString();
-const toDate = toObj.toISOString();
+          const fromDate = new Date(f).toISOString();
+const toDateObj = new Date(t);
+toDateObj.setHours(23, 59, 59, 999);
+const toDate = toDateObj.toISOString();
 
                 try {
                     const [devs, trips, excs] = await Promise.all([
