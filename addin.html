@@ -120,7 +120,7 @@
                             const start = new Date(tr.start);
                             const stop = new Date(tr.stop);
                             const dur = stop - start;
-                            const km = (tr.distance || 0) / 1000;
+                            const km = (tr.distance || 0);
 
                             if (lastStop) s.stopMs += (start - lastStop);
                             lastStop = stop;
