@@ -1,255 +1,205 @@
 <!DOCTYPE html>
 <html>
-<body>
-    <div id="passenger-report-addin" style="width: 100%; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f6f9; padding: 20px; box-sizing: border-box;">
+<head>
+    <meta charset="utf-8">
+    <style>
+        #passenger-report-addin { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f4f7f6; }
+        .header-controls { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; display: flex; gap: 15px; align-items: flex-end; }
+        .control-group { display: flex; flex-direction: column; gap: 5px; }
+        .control-group label { font-size: 12px; color: #666; font-weight: bold; text-transform: uppercase; }
+        input[type="date"] { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-generate { background-color: #007bff; color: white; }
+        .btn-generate:hover { background-color: #0056b3; }
+        .btn-excel { background-color: #28a745; color: white; }
+        .btn-excel:hover { background-color: #218838; }
+
+        .global-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .stat-card { background: white; padding: 20px; border-radius: 8px; border-left: 5px solid #ccc; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .stat-card.occupied { border-left-color: #28a745; }
+        .stat-card h3 { margin: 0; color: #888; font-size: 14px; text-transform: uppercase; }
+        .stat-card .value { font-size: 28px; font-weight: bold; margin: 10px 0; color: #333; }
+        .stat-card .sub-value { color: #666; font-size: 14px; }
+
+        .fleet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+        .vehicle-card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .vehicle-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .occ-badge { background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 12px; font-size: 12px; }
         
-        <style>
-            #passenger-report-addin .toolbar { 
-                background: white; padding: 20px; border-radius: 10px; 
-                border: 1px solid #dcdde1; display: flex; gap: 20px; 
-                align-items: flex-end; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            }
-            #passenger-report-addin .date-group { display: flex; flex-direction: column; gap: 5px; }
-            #passenger-report-addin .date-group label { font-size: 12px; font-weight: bold; color: #7f8c8d; text-transform: uppercase; }
-            #passenger-report-addin .date-group input { padding: 10px; border: 1px solid #dcdde1; border-radius: 6px; font-family: inherit; }
-            
-            #passenger-report-addin button { padding: 12px 24px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; }
-            #passenger-report-addin #btn-refresh { background: #0984e3; }
-            #passenger-report-addin #btn-refresh:hover { background: #074b83; }
-            #passenger-report-addin #btn-download { background: #27ae60; }
-
-            #passenger-report-addin .dash-row { display: flex; gap: 20px; margin-bottom: 25px; width: 100%; }
-            #passenger-report-addin .dash-box { 
-                flex: 1; background: white; padding: 20px; border-radius: 10px; 
-                border: 1px solid #dcdde1; border-left: 6px solid #0984e3; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            }
-            #passenger-report-addin .dash-box h4 { margin: 0 0 10px 0; font-size: 14px; color: #7f8c8d; text-transform: uppercase; }
-            #passenger-report-addin .dash-box .val { font-size: 28px; font-weight: 900; color: #2f3640; display: block; margin-bottom: 5px;}
-            #passenger-report-addin .dash-box .sub { font-size: 13px; color: #95a5a6; font-weight: 600;}
-
-            #passenger-report-addin .cards-grid { 
-                display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; width: 100%; 
-            }
-
-            #passenger-report-addin .v-card { 
-                background: white; border-radius: 10px; border: 1px solid #dcdde1; 
-                box-shadow: 0 4px 10px rgba(0,0,0,0.06); display: flex; flex-direction: column; overflow: hidden;
-            }
-            #passenger-report-addin .v-header { background: #f8f9fa; padding: 15px 20px; border-bottom: 1px solid #dcdde1; display: flex; justify-content: space-between; align-items: center;}
-            #passenger-report-addin .v-header h3 { margin: 0; font-size: 16px; color: #2c3e50; font-weight: 800;}
-            #passenger-report-addin .badge-occ { background: #27ae60; color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-
-            #passenger-report-addin .v-body { padding: 20px; }
-            #passenger-report-addin .data-sect { margin-bottom: 18px; padding-bottom: 15px; border-bottom: 1px dashed #ecf0f1; }
-            #passenger-report-addin .data-sect:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-            
-            #passenger-report-addin .sect-title { font-size: 11px; font-weight: 800; color: #95a5a6; text-transform: uppercase; margin-bottom: 10px; display: block; }
-            #passenger-report-addin .row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px; }
-            #passenger-report-addin .lab { color: #34495e; font-weight: 600; }
-            #passenger-report-addin .num { font-weight: 800; color: #2c3e50; }
-
-            #passenger-report-addin .text-green { color: #27ae60 !important; }
-            #passenger-report-addin .text-orange { color: #e67e22 !important; }
-            #passenger-report-addin .loading-msg { grid-column: 1 / -1; text-align: center; padding: 50px; color: #7f8c8d; font-size: 16px; font-weight: bold;}
-        </style>
-
-        <h2 style="color: #2c3e50; margin-top: 0; margin-bottom: 20px;">📊 Monitor de Ocupación de Flota</h2>
-
-        <div class="toolbar">
-            <div class="date-group">
+        .data-section { border-top: 1px solid #eee; padding-top: 10px; margin-top: 10px; }
+        .data-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; }
+        .label { color: #777; font-weight: 500; }
+        .val { font-weight: bold; color: #333; }
+        .val.highlight { color: #28a745; }
+        .val.waiting { color: #f39c12; }
+    </style>
+</head>
+<body>
+    <div id="passenger-report-addin">
+        <div class="header-controls">
+            <div class="control-group">
                 <label>Fecha Desde</label>
-                <input type="date" id="d-from">
+                <input type="date" id="date-from">
             </div>
-            <div class="date-group">
+            <div class="control-group">
                 <label>Fecha Hasta</label>
-                <input type="date" id="d-to">
+                <input type="date" id="date-to">
             </div>
-            <button id="btn-refresh">Generar Informe</button>
-            <button id="btn-download" style="display:none">📥 Descargar Excel</button>
+            <button class="btn-generate" id="btn-run">Generar Informe</button>
+            <button class="btn-excel" id="btn-export">📊 Descargar Excel</button>
         </div>
 
-        <div id="global-dash" class="dash-row"></div>
-
-        <div id="cards-container" class="cards-grid">
-            <div class="loading-msg">Indica el rango de fechas y pulsa "Generar Informe" para analizar la flota.</div>
-        </div>
+        <div id="results-container"></div>
     </div>
 
     <script>
-        geotab.addin.passengerReport = function (api, state) {
-            const RULE_ID = "aDvSGnsFqwU6HY0-rtpPgkA";
-            let lastData = [];
+        geotab.addin.passengerReportAddin = function (api, state) {
+            const elResults = document.getElementById('results-container');
+            const btnRun = document.getElementById('btn-run');
+            const btnExport = document.getElementById('btn-export');
+            let lastReportData = [];
 
-            const callAPI = (m, p) => new Promise((rs, rj) => api.call(m, p, rs, rj));
-
-            const fmtT = (ms) => {
-                const totalM = Math.round(ms / 60000);
-                const h = Math.floor(totalM / 60);
-                const m = totalM % 60;
-                return h > 0 ? `${h}h ${m}m` : `${m} min`;
+            const formatDuration = (ms) => {
+                const totalMin = Math.round(ms / 60000);
+                const h = Math.floor(totalMin / 60);
+                const m = totalMin % 60;
+                return `${h}h ${m}m`;
             };
 
             const process = async (f, t) => {
-                const fromDate = new Date(f).toISOString();
-                const toDateObj = new Date(t);
-                toDateObj.setHours(23, 59, 59, 999);
-                const toDate = toDateObj.toISOString();
+                elResults.innerHTML = '<p>Procesando datos de flota...</p>';
+                
+                // CORRECCIÓN: Ajuste de Horario Local para no perder viajes de madrugada
+                const [fYear, fMonth, fDay] = f.split('-');
+                const [tYear, tMonth, tDay] = t.split('-');
+                const fromDate = new Date(fYear, fMonth - 1, fDay, 0, 0, 0, 0).toISOString();
+                const toDate = new Date(tYear, tMonth - 1, tDay, 23, 59, 59, 999).toISOString();
 
                 try {
-                    const [devs, trips, excs] = await Promise.all([
-                        callAPI("Get", { typeName: "Device" }),
-                        callAPI("Get", { typeName: "Trip", search: { fromDate, toDate } }),
-                        callAPI("Get", { typeName: "ExceptionEvent", search: { ruleSearch: { id: RULE_ID }, fromDate, toDate } })
+                    const [devices, allTrips, allMessages] = await Promise.all([
+                        api.call("Get", { typeName: "Device" }),
+                        api.call("Get", { typeName: "Trip", search: { fromDate, toDate } }),
+                        api.call("Get", { typeName: "TextMessage", search: { fromDate, toDate } })
                     ]);
 
-                    return devs.map(d => {
-                        const dT = trips.filter(tr => tr.device.id === d.id).sort((a,b) => new Date(a.start) - new Date(b.start));
-                        if (dT.length === 0) return null;
-
-                        const dE = excs.filter(ex => ex.device.id === d.id);
-                        let lastStop = null;
-
-                        let s = { 
-                            name: d.name, 
-                            oKm: 0, vKm: 0, oMs: 0, vMs: 0, 
-                            stopMs: 0, oCount: 0, vCount: 0, 
-                            idleMs: 0 
+                    const report = devices.map(dev => {
+                        const devTrips = allTrips.filter(tr => tr.device.id === dev.id);
+                        const devMsgs = allMessages.filter(m => m.device.id === dev.id);
+                        
+                        let stats = {
+                            name: dev.name,
+                            occKm: 0, occTime: 0, occTrips: 0,
+                            vacKm: 0, vacTime: 0, vacTrips: 0,
+                            waitingTime: 0, totalEngineTime: 0
                         };
 
-                        dT.forEach(tr => {
-                            const start = new Date(tr.start);
-                            const stop = new Date(tr.stop);
-                            const dur = stop - start;
-                            const km = (tr.distance || 0) / 1000;
+                        devTrips.forEach(tr => {
+                            // CORRECCIÓN: Geotab Trip.distance ya viene en KM
+                            const km = tr.distance || 0; 
+                            const duration = new Date(tr.stop) - new Date(tr.start);
+                            
+                            // Si el viaje es muy corto (<100m), lo contamos como tiempo de espera (ralentí)
+                            if (km < 0.1) {
+                                stats.waitingTime += duration;
+                                return;
+                            }
 
-                            if (lastStop) s.stopMs += (start - lastStop);
-                            lastStop = stop;
-
-                            // NUEVA LÓGICA DE DETECCIÓN POR SOLAPAMIENTO:
-                            // Comprobamos si la regla estuvo activa en CUALQUIER momento durante este viaje.
-                            let isOccupied = dE.some(e => {
-                                const eStart = new Date(e.activeFrom).getTime();
-                                // Si la regla sigue activa (activeTo es null), usamos la fecha actual
-                                const eEnd = e.activeTo ? new Date(e.activeTo).getTime() : new Date().getTime();
-                                
-                                // Solapa si la regla empezó antes de que el viaje terminara, 
-                                // y la regla terminó después de que el viaje empezara.
-                                return eStart <= stop.getTime() && eEnd >= start.getTime();
+                            // Lógica de Ocupación: ¿Hubo un mensaje de pasajero durante este viaje?
+                            const isOccupied = devMsgs.some(m => {
+                                const mTime = new Date(m.delivered || m.sentDate);
+                                return mTime >= new Date(tr.start) && mTime <= new Date(tr.stop);
                             });
 
-                            // Filtro de Ralentí/Espera (< 0.1 km = Falso Viaje)
-                            if (km < 0.1) {
-                                s.idleMs += dur;
+                            if (isOccupied) {
+                                stats.occKm += km;
+                                stats.occTime += duration;
+                                stats.occTrips++;
                             } else {
-                                // Si en algún momento del viaje hubo evento, suma TODO el viaje a Ocupado
-                                if (isOccupied) { 
-                                    s.oCount++; 
-                                    s.oKm += km; 
-                                    s.oMs += dur; 
-                                } else { 
-                                    s.vCount++; 
-                                    s.vKm += km; 
-                                    s.vMs += dur; 
-                                }
+                                stats.vacKm += km;
+                                stats.vacTime += duration;
+                                stats.vacTrips++;
                             }
                         });
-                        
-                        if (s.oCount > 0 || s.vCount > 0 || s.idleMs > 0) return s;
-                        return null;
 
-                    })
-                    .filter(x => x !== null)
-                    .sort((a,b) => b.oCount - a.oCount || a.name.localeCompare(b.name));
-                    
-                } catch (e) { alert("Error obteniendo datos: " + e.message); return []; }
+                        return stats;
+                    }).filter(s => (s.occTrips + s.vacTrips) > 0 || s.waitingTime > 0);
+
+                    lastReportData = report;
+                    render(report);
+
+                } catch (err) {
+                    elResults.innerHTML = `<p style="color:red">Error: ${err.message}</p>`;
+                }
             };
 
             const render = (data) => {
-                const grid = document.getElementById("cards-container");
-                const dash = document.getElementById("global-dash");
-                let g = { oK: 0, vK: 0, oM: 0, vM: 0, oV: 0, vV: 0 };
+                const totalOccKm = data.reduce((s, v) => s + v.occKm, 0);
+                const totalVacKm = data.reduce((s, v) => s + v.vacKm, 0);
+                const totalOccTime = data.reduce((s, v) => s + v.occTime, 0);
+                const totalVacTime = data.reduce((s, v) => s + v.vacTime, 0);
 
-                if(data.length === 0) {
-                    grid.innerHTML = '<div class="loading-msg">No se encontraron datos para estas fechas.</div>';
-                    dash.innerHTML = "";
-                    document.getElementById("btn-download").style.display = "none";
-                    return;
-                }
-
-                grid.innerHTML = data.map(v => {
-                    g.oK += v.oKm; g.vK += v.vKm; g.oM += v.oMs; g.vM += v.vMs; g.oV += v.oCount; g.vV += v.vCount;
-                    
-                    return `
-                    <div class="v-card">
-                        <div class="v-header">
-                            <h3>🚚 ${v.name}</h3>
-                            ${v.oCount > 0 ? `<span class="badge-occ">${v.oCount} Viajes Occ.</span>` : ''}
+                let html = `
+                    <div class="global-stats">
+                        <div class="stat-card occupied">
+                            <h3>Total Flota Ocupada</h3>
+                            <div class="value">${totalOccKm.toFixed(1)} km</div>
+                            <div class="sub-value">${data.reduce((s,v)=>s+v.occTrips,0)} viajes | ${formatDuration(totalOccTime)} conduciendo</div>
                         </div>
-                        <div class="v-body">
-                            <div class="data-sect">
-                                <span class="sect-title">👥 Ocupado (Con Pasajero)</span>
-                                <div class="row"><span class="lab">Viajes Reales:</span><span class="num">${v.oCount}</span></div>
-                                <div class="row"><span class="lab">Distancia:</span><span class="num text-green">${v.oKm.toFixed(1)} km</span></div>
-                                <div class="row"><span class="lab">Tiempo conducción:</span><span class="num">${fmtT(v.oMs)}</span></div>
-                            </div>
-                            <div class="data-sect">
-                                <span class="sect-title">⚪ Vacío (Solo Conductor)</span>
-                                <div class="row"><span class="lab">Viajes Reales:</span><span class="num">${v.vCount}</span></div>
-                                <div class="row"><span class="lab">Distancia:</span><span class="num">${v.vKm.toFixed(1)} km</span></div>
-                                <div class="row"><span class="lab">Tiempo conducción:</span><span class="num">${fmtT(v.vMs)}</span></div>
-                            </div>
-                            <div class="data-sect">
-                                <span class="sect-title">⏱️ Tiempos de Inactividad</span>
-                                <div class="row"><span class="lab">Espera (Motor Arrancado):</span><span class="num text-orange">${fmtT(v.idleMs)}</span></div>
-                                <div class="row"><span class="lab">Motor Apagado:</span><span class="num">${fmtT(v.stopMs)}</span></div>
-                            </div>
+                        <div class="stat-card">
+                            <h3>Total Flota Vacía</h3>
+                            <div class="value">${totalVacKm.toFixed(1)} km</div>
+                            <div class="sub-value">${data.reduce((s,v)=>s+v.vacTrips,0)} viajes | ${formatDuration(totalVacTime)} conduciendo</div>
                         </div>
-                    </div>`;
-                }).join('');
-
-                dash.innerHTML = `
-                    <div class="dash-box" style="border-left-color: #27ae60;">
-                        <h4>Total Flota Ocupada</h4>
-                        <span class="val text-green">${g.oK.toFixed(1)} km</span>
-                        <span class="sub">${g.oV} viajes | ${fmtT(g.oM)} conduciendo</span>
                     </div>
-                    <div class="dash-box" style="border-left-color: #7f8c8d;">
-                        <h4>Total Flota Vacía</h4>
-                        <span class="val" style="color:#2f3640;">${g.vK.toFixed(1)} km</span>
-                        <span class="sub">${g.vV} viajes | ${fmtT(g.vM)} conduciendo</span>
-                    </div>
+                    <div class="fleet-grid">
                 `;
-                document.getElementById("btn-download").style.display = "inline-block";
+
+                data.forEach(v => {
+                    html += `
+                        <div class="vehicle-card">
+                            <div class="vehicle-title">
+                                🚚 ${v.name}
+                                ${v.occTrips > 0 ? `<span class="occ-badge">${v.occTrips} Viajes Occ.</span>` : ''}
+                            </div>
+                            <div class="data-section">
+                                <div class="data-row"><span class="label">👤 OCUPADO (CON PASAJERO)</span></div>
+                                <div class="data-row"><span class="label">Viajes Reales:</span><span class="val">${v.occTrips}</span></div>
+                                <div class="data-row"><span class="label">Distancia:</span><span class="val highlight">${v.occKm.toFixed(1)} km</span></div>
+                                <div class="data-row"><span class="label">Tiempo conducción:</span><span class="val">${formatDuration(v.occTime)}</span></div>
+                            </div>
+                            <div class="data-section">
+                                <div class="data-row"><span class="label">⚪ VACÍO (SOLO CONDUCTOR)</span></div>
+                                <div class="data-row"><span class="label">Viajes Reales:</span><span class="val">${v.vacTrips}</span></div>
+                                <div class="data-row"><span class="label">Distancia:</span><span class="val">${v.vacKm.toFixed(1)} km</span></div>
+                                <div class="data-row"><span class="label">Tiempo conducción:</span><span class="val">${formatDuration(v.vacTime)}</span></div>
+                            </div>
+                            <div class="data-section">
+                                <div class="data-row"><span class="label">⏱️ TIEMPOS DE INACTIVIDAD</span></div>
+                                <div class="data-row"><span class="label">Espera (Motor Arrancado):</span><span class="val waiting">${formatDuration(v.waitingTime)}</span></div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div>`;
+                elResults.innerHTML = html;
             };
 
             return {
-                initialize: function (api, state, callback) {
+                initialize(api, state, callback) {
                     const today = new Date().toISOString().split('T')[0];
-                    document.getElementById("d-from").value = today;
-                    document.getElementById("d-to").value = today;
+                    document.getElementById('date-from').value = today;
+                    document.getElementById('date-to').value = today;
+                    
+                    btnRun.addEventListener('click', () => {
+                        process(document.getElementById('date-from').value, document.getElementById('date-to').value);
+                    });
+
                     callback();
                 },
-                focus: function (api, state) {
-                    document.getElementById("btn-refresh").onclick = async () => {
-                        const btn = document.getElementById("btn-refresh");
-                        btn.innerText = "Calculando..."; btn.disabled = true;
-                        
-                        lastData = await process(document.getElementById("d-from").value, document.getElementById("d-to").value);
-                        render(lastData);
-                        
-                        btn.innerText = "Generar Informe"; btn.disabled = false;
-                    };
-                    document.getElementById("btn-download").onclick = () => {
-                        let csv = "\uFEFFVehiculo,Viajes_Ocupado,Km_Ocupado,Tiempo_Cond_Ocupado,Viajes_Vacio,Km_Vacio,Tiempo_Cond_Vacio,Tiempo_Espera_Motor_ON\n" + 
-                                  lastData.map(v => `${v.name},${v.oCount},${v.oKm.toFixed(2)},${v.oMs},${v.vCount},${v.vKm.toFixed(2)},${v.vMs},${v.idleMs}`).join("\n");
-                        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                        const link = document.createElement("a");
-                        link.href = URL.createObjectURL(blob);
-                        link.download = "Reporte_Ocupacion.csv";
-                        link.click();
-                    };
-                },
-                blur: function () {}
+                focus(api, state) {
+                    process(document.getElementById('date-from').value, document.getElementById('date-to').value);
+                }
             };
         };
     </script>
