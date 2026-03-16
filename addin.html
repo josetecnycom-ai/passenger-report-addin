@@ -40,6 +40,7 @@
     <script>
         geotab.addin.passengerReportAddin = function (api, state) {
             const elResults = document.getElementById('results-container');
+            let currentReportData = []; // Guardamos los datos aquí para poder exportarlos
             
             const formatDuration = (ms) => {
                 if (ms <= 0) return "0 min";
@@ -51,6 +52,7 @@
 
             const process = async (f, t) => {
                 elResults.innerHTML = '<p>Buscando regla de ocupación y calculando viajes...</p>';
+                currentReportData = []; // Vaciamos datos anteriores
                 
                 const fromDate = new Date(f + "T00:00:00Z").toISOString();
                 const toDate = new Date(t + "T23:59:59Z").toISOString();
@@ -87,8 +89,8 @@
                             waitingTime: 0
                         };
 
-                        let isOccupied = false; // Estado inicial: Vacío
-                        let lastTripEnd = new Date(0); // Para medir el espacio de tiempo entre viajes
+                        let isOccupied = false; 
+                        let lastTripEnd = new Date(0); 
 
                         devTrips.forEach(tr => {
                             const dist = tr.distance || 0;
@@ -96,25 +98,22 @@
                             const tStop = new Date(tr.stop);
                             const duration = tStop - tStart;
                             
-                            // Filtrar micro-movimientos como tiempo de espera (no afecta al interruptor)
+                            // Filtrar micro-movimientos
                             if (dist < 0.1) {
                                 stats.waitingTime += duration;
                                 return; 
                             }
 
                             // LÓGICA DE INTERRUPTOR (TOGGLE)
-                            // ¿Se abrió alguna puerta entre el final del viaje anterior y el inicio de este viaje?
                             const doorOpenedDuringStop = devExcs.some(ex => {
                                 const exTime = new Date(ex.activeFrom);
                                 return exTime >= lastTripEnd && exTime <= tStart;
                             });
 
-                            // Si la puerta se abrió al menos una vez mientras estaba parado, alternamos el estado
                             if (doorOpenedDuringStop) {
                                 isOccupied = !isOccupied;
                             }
 
-                            // Clasificamos el viaje según el estado actual
                             if (isOccupied) {
                                 stats.occKm += dist;
                                 stats.occTime += duration;
@@ -125,15 +124,15 @@
                                 stats.vacTrips++;
                             }
 
-                            // Actualizamos el final del viaje para la siguiente iteración
                             lastTripEnd = tStop;
                         });
 
                         return stats;
                     }).filter(s => (s.occKm + s.vacKm) > 0 || s.waitingTime > 0);
 
-                    // 3. Ordenar el reporte: de mayor a menor número de viajes ocupados
+                    // 3. Ordenar y guardar en la variable global para el export
                     report.sort((a, b) => b.occTrips - a.occTrips);
+                    currentReportData = report;
 
                     render(report);
                 } catch (err) {
@@ -178,14 +177,55 @@
                 `;
             };
 
+            const exportToExcel = () => {
+                if (!currentReportData || currentReportData.length === 0) {
+                    alert("⚠️ No hay datos para exportar. Por favor, genera el informe primero.");
+                    return;
+                }
+
+                // Cabeceras del CSV
+                let csvContent = "Vehículo,Viajes Ocupados,Distancia Ocupada (km),Tiempo Ocupado,Viajes Vacíos,Distancia Vacía (km),Ralentí/Espera\n";
+
+                // Filas de datos
+                currentReportData.forEach(row => {
+                    const rowData = [
+                        `"${row.name}"`, // Comillas por si el nombre tiene comas
+                        row.occTrips,
+                        row.occKm.toFixed(1).replace('.', ','), // Formato europeo para decimales en Excel
+                        `"${formatDuration(row.occTime)}"`,
+                        row.vacTrips,
+                        row.vacKm.toFixed(1).replace('.', ','),
+                        `"${formatDuration(row.waitingTime)}"`
+                    ];
+                    csvContent += rowData.join(";") + "\n"; // Usamos punto y coma (;) que funciona mejor en Excel español
+                });
+
+                // Crear y descargar archivo
+                const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' }); // \uFEFF fuerza a Excel a leer UTF-8
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                const fromD = document.getElementById('date-from').value;
+                const toD = document.getElementById('date-to').value;
+                
+                link.setAttribute("href", url);
+                link.setAttribute("download", `Informe_Ocupacion_${fromD}_al_${toD}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
             return {
                 initialize(api, state, callback) {
                     const today = new Date().toISOString().split('T')[0];
                     document.getElementById('date-from').value = today;
                     document.getElementById('date-to').value = today;
+                    
                     document.getElementById('btn-run').addEventListener('click', () => {
                         process(document.getElementById('date-from').value, document.getElementById('date-to').value);
                     });
+
+                    document.getElementById('btn-export').addEventListener('click', exportToExcel);
+
                     callback();
                 },
                 focus(api, state) {
