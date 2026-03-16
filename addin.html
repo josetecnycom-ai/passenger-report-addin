@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    </head>
+</head>
 <body>
     <style>
         #passenger-report-addin { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f4f7f6; }
@@ -102,9 +102,19 @@
                                 return;
                             }
 
+                            // CORRECCIÓN CRÍTICA: La propiedad correcta es 'sent', no 'sentDate'
                             const isOccupied = devMsgs.some(m => {
-                                const mTime = new Date(m.delivered || m.sentDate);
-                                return mTime >= new Date(tr.start) && mTime <= new Date(tr.stop);
+                                const msgDateStr = m.sent || m.delivered || m.activeFrom;
+                                if (!msgDateStr) return false; // Si no hay fecha, ignoramos
+                                
+                                const mTime = new Date(msgDateStr).getTime();
+                                const tStart = new Date(tr.start).getTime();
+                                const tStop = new Date(tr.stop).getTime();
+                                
+                                // Damos 3 minutos de cortesía por si marcan el mensaje justo antes de arrancar
+                                const margin = 3 * 60000; 
+                                
+                                return mTime >= (tStart - margin) && mTime <= (tStop + margin);
                             });
 
                             if (isOccupied) {
