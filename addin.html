@@ -2,6 +2,8 @@
 <html>
 <head>
     <meta charset="utf-8">
+    </head>
+<body>
     <style>
         #passenger-report-addin { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f4f7f6; }
         .header-controls { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; display: flex; gap: 15px; align-items: flex-end; }
@@ -33,8 +35,7 @@
         .val.highlight { color: #28a745; }
         .val.waiting { color: #f39c12; }
     </style>
-</head>
-<body>
+
     <div id="passenger-report-addin">
         <div class="header-controls">
             <div class="control-group">
@@ -69,7 +70,6 @@
             const process = async (f, t) => {
                 elResults.innerHTML = '<p>Procesando datos de flota...</p>';
                 
-                // CORRECCIÓN: Ajuste de Horario Local para no perder viajes de madrugada
                 const [fYear, fMonth, fDay] = f.split('-');
                 const [tYear, tMonth, tDay] = t.split('-');
                 const fromDate = new Date(fYear, fMonth - 1, fDay, 0, 0, 0, 0).toISOString();
@@ -94,17 +94,14 @@
                         };
 
                         devTrips.forEach(tr => {
-                            // CORRECCIÓN: Geotab Trip.distance ya viene en KM
                             const km = tr.distance || 0; 
                             const duration = new Date(tr.stop) - new Date(tr.start);
                             
-                            // Si el viaje es muy corto (<100m), lo contamos como tiempo de espera (ralentí)
                             if (km < 0.1) {
                                 stats.waitingTime += duration;
                                 return;
                             }
 
-                            // Lógica de Ocupación: ¿Hubo un mensaje de pasajero durante este viaje?
                             const isOccupied = devMsgs.some(m => {
                                 const mTime = new Date(m.delivered || m.sentDate);
                                 return mTime >= new Date(tr.start) && mTime <= new Date(tr.stop);
