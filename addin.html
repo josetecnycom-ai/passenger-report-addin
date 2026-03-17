@@ -1,76 +1,198 @@
-const process = async (f, t) => {
-    elResults.innerHTML = '<p>Analizando viajes y eventos de ocupación...</p>';
-    currentReportData = [];
-    
-    const fromDate = new Date(f + "T00:00:00Z").toISOString();
-    const toDate = new Date(t + "T23:59:59Z").toISOString();
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Monitor de Ocupación</title>
+    <style>
+        #passenger-report-addin { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f0f2f5; color: #333; }
+        .header-controls { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap; }
+        .control-group { display: flex; flex-direction: column; gap: 8px; }
+        .control-group label { font-size: 13px; font-weight: 700; color: #555; text-transform: uppercase; }
+        input[type="date"] { padding: 10px; border: 1px solid #ccd0d5; border-radius: 6px; font-size: 14px; }
+        
+        button { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: 700; transition: all 0.2s; font-size: 14px; }
+        .btn-generate { background-color: #007bff; color: white; }
+        .btn-generate:hover { background-color: #0056b3; }
+        .btn-excel { background-color: #28a745; color: white; }
+        .btn-excel:hover { background-color: #218838; }
+        
+        .global-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 25px; }
+        .summary-card { background: white; padding: 25px; border-radius: 12px; border-left: 6px solid #ccc; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .summary-card.occupied { border-left-color: #28a745; }
+        .summary-card h3 { margin: 0; font-size: 14px; color: #666; text-transform: uppercase; }
+        .summary-card .big-val { font-size: 32px; font-weight: 800; margin: 10px 0; color: #1c1e21; }
+        .summary-card .sub-val { font-size: 14px; color: #888; }
 
-    try {
-        const allRules = await api.call("Get", { typeName: "Rule" });
-        const ocupacionRule = allRules.find(r => 
-            r.name.toLowerCase().includes("pasajero") || 
-            r.name.toLowerCase().includes("ocupaci")
-        );
+        .fleet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+        .vehicle-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); position: relative; }
+        .vehicle-name { font-size: 18px; font-weight: 800; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .trip-badge { position: absolute; top: 20px; right: 20px; background: #e7f3ff; color: #007bff; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+        
+        .stat-section { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #eee; }
+        .stat-title { font-size: 11px; font-weight: 800; color: #999; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px; }
+        .val-highlight { font-weight: 700; color: #28a745; }
+        .inactivity { color: #e67e22; }
+    </style>
+</head>
+<body>
+    <div id="passenger-report-addin">
+        <div class="header-controls">
+            <div class="control-group"><label>Fecha Desde</label><input type="date" id="date-from"></div>
+            <div class="control-group"><label>Fecha Hasta</label><input type="date" id="date-to"></div>
+            <button class="btn-generate" id="btn-run">Generar Informe</button>
+            <button class="btn-excel" id="btn-export">Exportar Excel</button>
+        </div>
+        <div id="results-container"></div>
+    </div>
 
-        if (!ocupacionRule) {
-            elResults.innerHTML = `<p style="color:red">Error: No se encontró la regla de ocupación.</p>`;
-            return;
-        }
+    <script>
+        geotab.addin.passengerReportAddin = function (api, state) {
+            const elResults = document.getElementById('results-container');
+            let currentReportData = [];
 
-        const [devices, allTrips, allExceptions] = await Promise.all([
-            api.call("Get", { typeName: "Device" }),
-            api.call("Get", { typeName: "Trip", search: { fromDate, toDate } }),
-            api.call("Get", { typeName: "ExceptionEvent", search: { fromDate, toDate, ruleSearch: { id: ocupacionRule.id } } })
-        ]);
-
-        let report = devices.map(dev => {
-            const devTrips = allTrips.filter(tr => tr.device.id === dev.id);
-            const devExcs = allExceptions.filter(ex => ex.device.id === dev.id);
-            
-            let stats = {
-                name: dev.name,
-                occKm: 0, occTime: 0, occTrips: 0,
-                vacKm: 0, vacTime: 0, vacTrips: 0,
-                waitingTime: 0
+            const formatTime = (ms) => {
+                const totalMin = Math.floor(ms / 60000);
+                const h = Math.floor(totalMin / 60);
+                const m = totalMin % 60;
+                return h > 0 ? `${h}h ${m}m` : `${m} min`;
             };
 
-            devTrips.forEach(tr => {
-                const tStart = new Date(tr.start);
-                const tStop = new Date(tr.stop);
-                const dist = tr.distance || 0;
-                const duration = tStop - tStart;
+            const process = async (f, t) => {
+                elResults.innerHTML = '<div style="text-align:center; padding: 50px;"><h3>Analizando datos de flota...</h3><p>Esto puede tardar unos segundos según el número de vehículos.</p></div>';
+                
+                const fromDate = new Date(f + "T00:00:00Z").toISOString();
+                const toDate = new Date(t + "T23:59:59Z").toISOString();
 
-                // Nueva Lógica: ¿Hubo alguna excepción de ocupación DURANTE este viaje?
-                const hasOccupation = devExcs.some(ex => {
-                    const exStart = new Date(ex.activeFrom);
-                    const exEnd = new Date(ex.activeTo || ex.activeFrom);
-                    // El evento de ocupación ocurre dentro del rango del viaje
-                    return (exStart <= tStop && exEnd >= tStart);
-                });
+                try {
+                    const allRules = await api.call("Get", { typeName: "Rule" });
+                    const rule = allRules.find(r => r.name.toLowerCase().includes("pasajero") || r.name.toLowerCase().includes("ocupaci"));
 
-                if (hasOccupation) {
-                    stats.occKm += dist;
-                    stats.occTime += duration;
-                    stats.occTrips++;
-                } else {
-                    if (dist > 0.1) { // Solo contar como viaje vacío si hubo movimiento real
-                        stats.vacKm += dist;
-                        stats.vacTime += duration;
-                        stats.vacTrips++;
-                    } else {
-                        stats.waitingTime += duration;
+                    if (!rule) {
+                        elResults.innerHTML = "⚠️ No se encontró la regla de ocupación.";
+                        return;
                     }
+
+                    const [devices, allTrips, allExcs] = await Promise.all([
+                        api.call("Get", { typeName: "Device" }),
+                        api.call("Get", { typeName: "Trip", search: { fromDate, toDate } }),
+                        api.call("Get", { typeName: "ExceptionEvent", search: { fromDate, toDate, ruleSearch: { id: rule.id } } })
+                    ]);
+
+                    let report = devices.map(dev => {
+                        const devTrips = allTrips.filter(tr => tr.device.id === dev.id);
+                        const devExcs = allExcs.filter(ex => ex.device.id === dev.id);
+                        
+                        let s = { name: dev.name, occKm: 0, occTime: 0, occTrips: 0, vacKm: 0, vacTime: 0, vacTrips: 0, waitTime: 0 };
+
+                        devTrips.forEach(tr => {
+                            const tStart = new Date(tr.start);
+                            const tStop = new Date(tr.stop);
+                            const dist = tr.distance || 0;
+                            const duration = tStop - tStart;
+
+                            // LÓGICA DE INTERSECCIÓN
+                            const isOccupied = devExcs.some(ex => {
+                                const exStart = new Date(ex.activeFrom);
+                                const exStop = new Date(ex.activeTo || ex.activeFrom);
+                                return (exStart <= tStop && exStop >= tStart);
+                            });
+
+                            if (isOccupied) {
+                                s.occKm += dist;
+                                s.occTime += duration;
+                                s.occTrips++;
+                            } else if (dist > 0.1) {
+                                s.vacKm += dist;
+                                s.vacTime += duration;
+                                s.vacTrips++;
+                            } else {
+                                s.waitTime += duration;
+                            }
+                        });
+                        return s;
+                    }).filter(v => (v.occKm + v.vacKm) > 0 || v.occTrips > 0);
+
+                    report.sort((a, b) => b.occTrips - a.occTrips);
+                    currentReportData = report;
+                    render(report);
+                } catch (e) {
+                    elResults.innerHTML = "Error: " + e.message;
                 }
-            });
+            };
 
-            return stats;
-        }).filter(s => (s.occKm + s.vacKm) > 0 || s.occTrips > 0);
+            const render = (data) => {
+                const tOKm = data.reduce((a, b) => a + b.occKm, 0);
+                const tVKm = data.reduce((a, b) => a + b.vacKm, 0);
+                const tOTrips = data.reduce((a, b) => a + b.occTrips, 0);
 
-        report.sort((a, b) => b.occTrips - a.occTrips);
-        currentReportData = report;
-        render(report);
+                elResults.innerHTML = `
+                    <div class="global-summary">
+                        <div class="summary-card occupied">
+                            <h3>Total Flota Ocupada</h3>
+                            <div class="big-val">${tOKm.toFixed(1)} km</div>
+                            <div class="sub-val">${tOTrips} viajes con pasajeros</div>
+                        </div>
+                        <div class="summary-card">
+                            <h3>Total Flota Vacía</h3>
+                            <div class="big-val">${tVKm.toFixed(1)} km</div>
+                            <div class="sub-val">Movimientos sin pasajeros registrados</div>
+                        </div>
+                    </div>
+                    <div class="fleet-grid">
+                        ${data.map(v => `
+                            <div class="vehicle-card">
+                                <div class="vehicle-name">🚚 ${v.name}</div>
+                                <div class="trip-badge">${v.occTrips} Viajes Occ.</div>
+                                
+                                <div class="stat-section">
+                                    <div class="stat-title">👤 Ocupado (Con Pasajero)</div>
+                                    <div class="stat-row"><span>Viajes Reales:</span><span class="val-highlight">${v.occTrips}</span></div>
+                                    <div class="stat-row"><span>Distancia:</span><span class="val-highlight">${v.occKm.toFixed(1)} km</span></div>
+                                    <div class="stat-row"><span>Tiempo conducción:</span><span>${formatTime(v.occTime)}</span></div>
+                                </div>
 
-    } catch (err) {
-        elResults.innerHTML = `<p style="color:red">Error: ${err.message}</p>`;
-    }
-};
+                                <div class="stat-section">
+                                    <div class="stat-title">⚪ Vacío (Solo Conductor)</div>
+                                    <div class="stat-row"><span>Viajes Reales:</span><span>${v.vacTrips}</span></div>
+                                    <div class="stat-row"><span>Distancia:</span><span>${v.vacKm.toFixed(1)} km</span></div>
+                                    <div class="stat-row"><span>Tiempo conducción:</span><span>${formatTime(v.vacTime)}</span></div>
+                                </div>
+
+                                <div class="stat-section">
+                                    <div class="stat-title">⏳ Tiempos de Inactividad</div>
+                                    <div class="stat-row"><span>Espera/Ralentí:</span><span class="inactivity">${formatTime(v.waitTime)}</span></div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            };
+
+            const exportExcel = () => {
+                if (!currentReportData.length) return alert("Genera el informe primero");
+                let csv = "\uFEFFVehiculo;Viajes Ocupado;Km Ocupado;Tiempo Ocupado;Viajes Vacio;Km Vacio;Espera\n";
+                currentReportData.forEach(r => {
+                    csv += `${r.name};${r.occTrips};${r.occKm.toFixed(2).replace('.',',')};${formatTime(r.occTime)};${r.vacTrips};${r.vacKm.toFixed(2).replace('.',',')};${formatTime(r.waitTime)}\n`;
+                });
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = `Reporte_Ocupacion_${new Date().getTime()}.csv`;
+                link.click();
+            };
+
+            return {
+                initialize(api, state, callback) {
+                    const today = new Date().toISOString().split('T')[0];
+                    document.getElementById('date-from').value = today;
+                    document.getElementById('date-to').value = today;
+                    document.getElementById('btn-run').addEventListener('click', () => process(document.getElementById('date-from').value, document.getElementById('date-to').value));
+                    document.getElementById('btn-export').addEventListener('click', exportExcel);
+                    callback();
+                }
+            };
+        };
+    </script>
+</body>
+</html>
