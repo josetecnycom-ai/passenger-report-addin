@@ -4,31 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitor de Ocupación VTC</title>
+</head>
+<body>
+
+<div id="passenger-report-addin">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* ── RESET & BASE ────────────────────────────────────────────────── */
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        #passenger-report-addin *,
+        #passenger-report-addin *::before,
+        #passenger-report-addin *::after { 
+            box-sizing: border-box; 
+        }
+
+        #passenger-report-addin h1, 
+        #passenger-report-addin p, 
+        #passenger-report-addin div {
+            margin: 0; 
+            padding: 0;
+        }
 
         #passenger-report-addin {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background: #f1f5f9;
             min-height: 100vh;
             color: #1e293b;
+            padding: 20px;
         }
 
         /* ── HEADER ────────────────────────────────────────────────────────── */
-        .top-bar {
+        #passenger-report-addin .top-bar {
             background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
             padding: 20px 28px;
             display: flex;
             align-items: center;
             gap: 16px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+            border-radius: 12px 12px 0 0;
+            margin-bottom: 0;
         }
-        .top-bar-icon { font-size: 32px; }
-        .top-bar-text h1 { font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -.3px; }
-        .top-bar-text p  { font-size: 12px; color: #94a3b8; margin-top: 2px; }
-        .top-bar-badge {
+        #passenger-report-addin .top-bar-icon { font-size: 32px; }
+        #passenger-report-addin .top-bar-text h1 { font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -.3px; }
+        #passenger-report-addin .top-bar-text p  { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+        #passenger-report-addin .top-bar-badge {
             margin-left: auto;
             background: rgba(16,185,129,0.15);
             color: #10b981;
@@ -41,42 +59,43 @@
         }
 
         /* ── CONTROLS ──────────────────────────────────────────────────────── */
-        .controls-panel {
+        #passenger-report-addin .controls-panel {
             background: #fff;
             padding: 20px 28px;
             display: flex;
             gap: 16px;
             align-items: flex-end;
             flex-wrap: wrap;
-            border-bottom: 1px solid #e2e8f0;
             box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border-radius: 0 0 12px 12px;
+            margin-bottom: 24px;
         }
-        .ctrl-group { display: flex; flex-direction: column; gap: 5px; }
-        .ctrl-group label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .6px; }
-        .ctrl-group input[type="date"] {
+        #passenger-report-addin .ctrl-group { display: flex; flex-direction: column; gap: 5px; }
+        #passenger-report-addin .ctrl-group label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .6px; }
+        #passenger-report-addin .ctrl-group input[type="date"] {
             padding: 9px 12px; border: 1px solid #e2e8f0; border-radius: 8px;
             font-size: 14px; color: #1e293b; background: #f8fafc;
             transition: border-color .2s;
         }
-        .ctrl-group input[type="date"]:focus { outline: none; border-color: #3b82f6; background: #fff; }
-        .ctrl-group select {
+        #passenger-report-addin .ctrl-group input[type="date"]:focus { outline: none; border-color: #3b82f6; background: #fff; }
+        #passenger-report-addin .ctrl-group select {
             padding: 9px 12px; border: 1px solid #e2e8f0; border-radius: 8px;
             font-size: 14px; color: #1e293b; background: #f8fafc; min-width: 200px; max-height: 120px;
         }
 
-        .btn {
+        #passenger-report-addin .btn {
             padding: 10px 22px; border: none; border-radius: 8px;
             font-size: 14px; font-weight: 700; cursor: pointer;
             transition: all .2s; display: flex; align-items: center; gap: 8px;
             white-space: nowrap;
         }
-        .btn-primary { background: #2563eb; color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,.3); }
-        .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
-        .btn-export  { background: #10b981; color: #fff; box-shadow: 0 2px 8px rgba(16,185,129,.3); }
-        .btn-export:hover  { background: #059669; transform: translateY(-1px); }
+        #passenger-report-addin .btn-primary { background: #2563eb; color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,.3); }
+        #passenger-report-addin .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
+        #passenger-report-addin .btn-export  { background: #10b981; color: #fff; box-shadow: 0 2px 8px rgba(16,185,129,.3); }
+        #passenger-report-addin .btn-export:hover  { background: #059669; transform: translateY(-1px); }
 
         /* ── LOADING ───────────────────────────────────────────────────────── */
-        #loading-overlay {
+        #passenger-report-addin #loading-overlay {
             display: none;
             flex-direction: column;
             align-items: center;
@@ -84,27 +103,27 @@
             padding: 80px;
             gap: 16px;
         }
-        .spinner {
+        #passenger-report-addin .spinner {
             width: 44px; height: 44px;
             border: 4px solid #e2e8f0;
             border-top-color: #2563eb;
             border-radius: 50%;
-            animation: spin .8s linear infinite;
+            animation: spin-occ .8s linear infinite;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        #loading-overlay p { color: #64748b; font-size: 15px; }
+        @keyframes spin-occ { to { transform: rotate(360deg); } }
+        #passenger-report-addin #loading-overlay p { color: #64748b; font-size: 15px; }
 
         /* ── MAIN CONTENT ──────────────────────────────────────────────────── */
-        #main-content { display: none; padding: 24px 28px; }
+        #passenger-report-addin #main-content { display: none; }
 
         /* ── KPI GRID ──────────────────────────────────────────────────────── */
-        .kpi-grid {
+        #passenger-report-addin .kpi-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 16px;
             margin-bottom: 24px;
         }
-        .kpi-card {
+        #passenger-report-addin .kpi-card {
             background: #fff;
             border-radius: 14px;
             padding: 22px 20px;
@@ -115,43 +134,50 @@
             border-top: 4px solid #e2e8f0;
             transition: transform .2s;
         }
-        .kpi-card:hover { transform: translateY(-2px); }
-        .kpi-card.kpi-occ  { border-top-color: #10b981; }
-        .kpi-card.kpi-vac  { border-top-color: #94a3b8; }
-        .kpi-card.kpi-pct  { border-top-color: #3b82f6; }
-        .kpi-card.kpi-fleet{ border-top-color: #f59e0b; }
+        #passenger-report-addin .kpi-card:hover { transform: translateY(-2px); }
+        #passenger-report-addin .kpi-card.kpi-occ  { border-top-color: #10b981; }
+        #passenger-report-addin .kpi-card.kpi-vac  { border-top-color: #94a3b8; }
+        #passenger-report-addin .kpi-card.kpi-pct  { border-top-color: #3b82f6; }
+        #passenger-report-addin .kpi-card.kpi-fleet{ border-top-color: #f59e0b; }
 
-        .kpi-icon { font-size: 24px; }
-        .kpi-val  { font-size: 28px; font-weight: 900; color: #0f172a; line-height: 1; }
-        .kpi-val span { font-size: 15px; font-weight: 600; color: #64748b; }
-        .kpi-lbl  { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .5px; }
-        .kpi-sub  { font-size: 12px; color: #94a3b8; }
+        #passenger-report-addin .kpi-icon { font-size: 24px; }
+        #passenger-report-addin .kpi-val  { font-size: 28px; font-weight: 900; color: #0f172a; line-height: 1; }
+        #passenger-report-addin .kpi-val span { font-size: 15px; font-weight: 600; color: #64748b; }
+        #passenger-report-addin .kpi-lbl  { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .5px; }
+        #passenger-report-addin .kpi-sub  { font-size: 12px; color: #94a3b8; }
 
         /* ── CHARTS ────────────────────────────────────────────────────────── */
-        .charts-row {
+        #passenger-report-addin .charts-row {
             display: grid;
-            grid-template-columns: 240px 1fr;
+            grid-template-columns: 300px 1fr;
             gap: 16px;
             margin-bottom: 24px;
         }
-        .chart-card {
+        #passenger-report-addin .chart-card {
             background: #fff;
             border-radius: 14px;
             padding: 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
         }
-        .chart-title { font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 16px; }
-        .chart-wrap  { height: 200px; position: relative; }
+        #passenger-report-addin .chart-title { font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 16px; }
+        #passenger-report-addin .chart-wrap  { height: 260px; position: relative; width: 100%; display: flex; justify-content: center; }
+        
+        /* Asegurar que el canvas respete el contenedor */
+        #passenger-report-addin canvas {
+            max-width: 100% !important;
+        }
 
         /* ── OCCUPANCY BAR ─────────────────────────────────────────────────── */
-        .occ-bar-section {
+        #passenger-report-addin .occ-bar-section {
             background: #fff;
             border-radius: 14px;
             padding: 16px 20px;
             margin-bottom: 24px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.06);
         }
-        .occ-bar-label {
+        #passenger-report-addin .occ-bar-label {
             display: flex;
             justify-content: space-between;
             font-size: 12px;
@@ -159,13 +185,14 @@
             color: #64748b;
             margin-bottom: 8px;
         }
-        .occ-bar-track {
+        #passenger-report-addin .occ-bar-track {
             height: 12px;
             background: #e2e8f0;
             border-radius: 6px;
             overflow: hidden;
+            width: 100%;
         }
-        .occ-bar-fill {
+        #passenger-report-addin .occ-bar-fill {
             height: 100%;
             background: linear-gradient(90deg, #10b981, #059669);
             border-radius: 6px;
@@ -173,89 +200,87 @@
         }
 
         /* ── SECTION TITLE ─────────────────────────────────────────────────── */
-        .section-title {
+        #passenger-report-addin .section-title {
             font-size: 13px;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: .7px;
             color: #64748b;
             margin-bottom: 14px;
+            margin-top: 24px;
         }
 
         /* ── VEHICLE CARDS ─────────────────────────────────────────────────── */
-        .fleet-grid {
+        #passenger-report-addin .fleet-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 16px;
         }
-        .vehicle-card {
+        #passenger-report-addin .vehicle-card {
             background: #fff;
             border-radius: 14px;
             padding: 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.06);
         }
-        .vc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-        .vc-name   { font-size: 16px; font-weight: 800; color: #0f172a; }
-        .vc-badge  {
+        #passenger-report-addin .vc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        #passenger-report-addin .vc-name   { font-size: 16px; font-weight: 800; color: #0f172a; }
+        #passenger-report-addin .vc-badge  {
             background: #eff6ff; color: #3b82f6;
             padding: 3px 10px; border-radius: 12px;
             font-size: 11px; font-weight: 700;
         }
-        .vc-occ-bar {
+        #passenger-report-addin .vc-occ-bar {
             height: 8px; background: #f1f5f9; border-radius: 4px;
-            overflow: hidden; margin-bottom: 4px;
+            overflow: hidden; margin-bottom: 4px; width: 100%;
         }
-        .vc-occ-fill { height: 100%; background: linear-gradient(90deg, #10b981, #059669); border-radius: 4px; }
-        .vc-occ-pct { font-size: 11px; color: #94a3b8; margin-bottom: 14px; }
+        #passenger-report-addin .vc-occ-fill { height: 100%; background: linear-gradient(90deg, #10b981, #059669); border-radius: 4px; }
+        #passenger-report-addin .vc-occ-pct { font-size: 11px; color: #94a3b8; margin-bottom: 14px; }
 
-        .vc-stats { display: flex; gap: 12px; }
-        .vc-stat { flex: 1; display: flex; align-items: flex-start; gap: 10px;
+        #passenger-report-addin .vc-stats { display: flex; gap: 12px; }
+        #passenger-report-addin .vc-stat { flex: 1; display: flex; align-items: flex-start; gap: 10px;
             padding: 12px; border-radius: 10px; }
-        .vc-stat-occ { background: #f0fdf4; }
-        .vc-stat-vac { background: #f8fafc; }
-        .vc-stat-icon { font-size: 18px; margin-top: 1px; }
-        .vc-stat-main { font-size: 16px; font-weight: 800; color: #0f172a; }
-        .vc-stat-sub  { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+        #passenger-report-addin .vc-stat-occ { background: #f0fdf4; }
+        #passenger-report-addin .vc-stat-vac { background: #f8fafc; }
+        #passenger-report-addin .vc-stat-icon { font-size: 18px; margin-top: 1px; }
+        #passenger-report-addin .vc-stat-main { font-size: 16px; font-weight: 800; color: #0f172a; }
+        #passenger-report-addin .vc-stat-sub  { font-size: 11px; color: #94a3b8; margin-top: 2px; }
 
         /* ── TABLE ─────────────────────────────────────────────────────────── */
-        .table-wrap { background: #fff; border-radius: 14px; padding: 0; overflow: hidden;
+        #passenger-report-addin .table-wrap { background: #fff; border-radius: 14px; padding: 0; overflow: hidden;
             box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-bottom: 30px; }
-        .data-table { width: 100%; border-collapse: collapse; }
-        .data-table thead { background: #f8fafc; }
-        .data-table th {
+        #passenger-report-addin .data-table { width: 100%; border-collapse: collapse; }
+        #passenger-report-addin .data-table thead { background: #f8fafc; }
+        #passenger-report-addin .data-table th {
             padding: 12px 16px; text-align: left;
             font-size: 11px; font-weight: 800; color: #64748b;
             text-transform: uppercase; letter-spacing: .5px;
             border-bottom: 1px solid #e2e8f0;
         }
-        .data-table td { padding: 11px 16px; font-size: 13px; border-bottom: 1px solid #f1f5f9; }
-        .data-table tr:last-child td { border-bottom: none; }
-        .data-table tr:hover td { background: #f8fafc; }
-        .td-name { font-weight: 700; }
-        .td-km   { font-weight: 700; color: #0f172a; }
+        #passenger-report-addin .data-table td { padding: 11px 16px; font-size: 13px; border-bottom: 1px solid #f1f5f9; }
+        #passenger-report-addin .data-table tr:last-child td { border-bottom: none; }
+        #passenger-report-addin .data-table tr:hover td { background: #f8fafc; }
+        #passenger-report-addin .td-name { font-weight: 700; color: #0f172a; }
+        #passenger-report-addin .td-km   { font-weight: 700; color: #0f172a; }
 
-        .badge {
+        #passenger-report-addin .badge {
             font-size: 11px; font-weight: 700;
-            padding: 3px 10px; border-radius: 20px; white-space: nowrap;
+            padding: 4px 10px; border-radius: 20px; white-space: nowrap; display: inline-block;
         }
-        .badge-occ { background: #dcfce7; color: #15803d; }
-        .badge-vac { background: #f1f5f9; color: #64748b; }
+        #passenger-report-addin .badge-occ { background: #dcfce7; color: #15803d; }
+        #passenger-report-addin .badge-vac { background: #f1f5f9; color: #64748b; }
 
         /* ── ERROR ─────────────────────────────────────────────────────────── */
-        .error-box {
+        #passenger-report-addin .error-box {
             background: #fef2f2; border: 1px solid #fecaca;
             color: #b91c1c; padding: 18px 22px; border-radius: 10px; margin: 20px;
         }
 
         /* ── RESPONSIVE ────────────────────────────────────────────────────── */
         @media (max-width: 768px) {
-            .charts-row { grid-template-columns: 1fr; }
-            .vc-stats   { flex-direction: column; }
+            #passenger-report-addin .charts-row { grid-template-columns: 1fr; }
+            #passenger-report-addin .vc-stats   { flex-direction: column; }
         }
     </style>
-</head>
-<body>
-<div id="passenger-report-addin">
 
     <!-- HEADER -->
     <div class="top-bar">
@@ -298,6 +323,16 @@
 
 </div>
 
+<script>
+    // In MyGeotab, we often need to dynamically load external scripts if they aren't loaded correctly by placing them in the DOM.
+    // We kept the <script src="..."> but adding a fallback just in case:
+    if (typeof Chart === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+        document.head.appendChild(script);
+    }
+</script>
 <script src="main.js"></script>
+
 </body>
 </html>
