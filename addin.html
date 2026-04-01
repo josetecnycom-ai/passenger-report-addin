@@ -345,7 +345,7 @@ geotab.addin.passengerReportAddin = function (api, state) {
             const m = Math.floor((ms % 3600000) / 60000);
             return h > 0 ? `${h}h ${m}m` : `${m} min`;
         },
-        km: (m) => (m / 1000).toFixed(1),    // Geotab Trip.distance está en METROS
+        km: (m) => Number(m).toFixed(1),    // Geotab Trip.distance ya está en km (KILÓMETROS)
         pct: (a, b) => (a + b) > 0 ? Math.round((a / (a + b)) * 100) : 0,
         localISO: (dateStr, endOfDay = false) => {
             // Respeta la timezone local del navegador en lugar de forzar UTC
@@ -386,8 +386,8 @@ geotab.addin.passengerReportAddin = function (api, state) {
 
         return doorEvents.some(ev => {
             const evTime = new Date(ev.activeFrom).getTime();
-            // La puerta se abrió dentro del viaje, o justo antes de que empezara
-            return evTime >= (tStart - WINDOW_BEFORE) && evTime <= (tStart + WINDOW_AFTER);
+            // La puerta se abrió justo antes de arrancar, durante el viaje o al detenerse (bajada de pasajero)
+            return evTime >= (tStart - WINDOW_BEFORE) && evTime <= (tStop + WINDOW_AFTER);
         });
     };
 
