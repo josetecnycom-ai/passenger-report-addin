@@ -8,7 +8,6 @@
 <body>
 
 <div id="passenger-report-addin">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* ── RESET & BASE ────────────────────────────────────────────────── */
         #passenger-report-addin *,
@@ -323,15 +322,7 @@
 
 </div>
 
-<script>
-    // In MyGeotab, we often need to dynamically load external scripts if they aren't loaded correctly by placing them in the DOM.
-    // We kept the <script src="..."> but adding a fallback just in case:
-    if (typeof Chart === 'undefined') {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
-        document.head.appendChild(script);
-    }
-</script>
+
 <script>
 geotab.addin.passengerReportAddin = function (api, state) {
 
@@ -689,34 +680,47 @@ geotab.addin.passengerReportAddin = function (api, state) {
     // ─── INICIALIZACIÓN ─────────────────────────────────────────────────────────
     return {
         initialize(api, state, callback) {
-            const today = new Date().toISOString().slice(0, 10);
-            const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+            const loadAddin = () => {
+                const today = new Date().toISOString().slice(0, 10);
+                const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
 
-            document.getElementById("date-from").value = yesterday;
-            document.getElementById("date-to").value   = yesterday;
+                document.getElementById("date-from").value = yesterday;
+                document.getElementById("date-to").value   = yesterday;
 
-            // Cargar dispositivos
-            api.call("Get", { typeName: "Device" }).then(devices => {
-                const sel = document.getElementById("device-selector");
-                devices.sort((a, b) => a.name.localeCompare(b.name)).forEach(d => {
-                    const opt = document.createElement("option");
-                    opt.value = d.id; opt.textContent = d.name;
-                    sel.appendChild(opt);
+                // Cargar dispositivos
+                api.call("Get", { typeName: "Device" }).then(devices => {
+                    const sel = document.getElementById("device-selector");
+                    devices.sort((a, b) => a.name.localeCompare(b.name)).forEach(d => {
+                        const opt = document.createElement("option");
+                        opt.value = d.id; opt.textContent = d.name;
+                        sel.appendChild(opt);
+                    });
                 });
-            });
 
-            document.getElementById("btn-run").addEventListener("click", () => {
-                const f = document.getElementById("date-from").value;
-                const t = document.getElementById("date-to").value;
-                if (!f || !t) { alert("Selecciona rango de fechas"); return; }
+                document.getElementById("btn-run").addEventListener("click", () => {
+                    const f = document.getElementById("date-from").value;
+                    const t = document.getElementById("date-to").value;
+                    if (!f || !t) { alert("Selecciona rango de fechas"); return; }
 
-                const sel = document.getElementById("device-selector");
-                const selectedIds = Array.from(sel.selectedOptions).map(o => o.value);
-                runReport(f, t, selectedIds);
-            });
+                    const sel = document.getElementById("device-selector");
+                    const selectedIds = Array.from(sel.selectedOptions).map(o => o.value);
+                    runReport(f, t, selectedIds);
+                });
 
-            document.getElementById("btn-export").addEventListener("click", exportExcel);
-            callback();
+                document.getElementById("btn-export").addEventListener("click", exportExcel);
+                callback();
+            };
+
+            // Inyectar Chart.js dinámicamente si no existe (método seguro MyGeotab)
+            if (typeof Chart === 'undefined') {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+                script.onload = () => loadAddin();
+                script.onerror = () => { console.error("Error cargando Chart.js"); callback(); };
+                document.head.appendChild(script);
+            } else {
+                loadAddin();
+            }
         }
     };
 };
